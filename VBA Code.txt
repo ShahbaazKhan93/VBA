@@ -1,0 +1,761 @@
+VBA Code
+
+Sub AutomateServiceReport()
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim rng As Range
+    Dim pvtCache As PivotCache
+    Dim pvt As PivotTable
+    
+    ' Set the active worksheet
+    Set ws = ActiveSheet
+    
+    ' Find the last row of data
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    
+    ' Format the data as a table
+    Set rng = ws.Range("A1:G" & lastRow)
+    ws.ListObjects.Add(xlSrcRange, rng, , xlYes).Name = "ServiceData"
+    
+    ' Add total row to the table
+    ws.ListObjects("ServiceData").ShowTotals = True
+    
+    ' Create a new sheet for the summary report
+    Sheets.Add.Name = "Summary Report"
+    Set ws = Sheets("Summary Report")
+    
+    ' Create Pivot Table
+    Set pvtCache = ThisWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:="ServiceData")
+    Set pvt = pvtCache.CreatePivotTable(TableDestination:=ws.Cells(3, 1), TableName:="ServiceSummary")
+    
+    ' Add fields to the Pivot Table
+    With pvt
+        .PivotFields("Service Category").Orientation = xlRowField
+        .PivotFields("Mechanic").Orientation = xlColumnField
+        .AddDataField .PivotFields("Service Time (hrs)"), "Total Hours", xlSum
+        .AddDataField .PivotFields("Service Cost ($)"), "Total Cost", xlSum
+    End With
+    
+    ' Format Pivot Table
+    ws.PivotTables("ServiceSummary").ShowValuesRow = True
+    ws.PivotTables("ServiceSummary").PivotFields("Total Hours").NumberFormat = "0.00"
+    ws.PivotTables("ServiceSummary").PivotFields("Total Cost").NumberFormat = "$#,##0.00"
+    
+    ' Add title
+    ws.Cells(1, 1).Value = "Service Summary Report"
+    ws.Cells(1, 1).Font.Size = 14
+    ws.Cells(1, 1).Font.Bold = True
+    
+    ' Calculate and display some statistics
+    Dim dataWs As Worksheet
+    Set dataWs = ThisWorkbook.Sheets("Sheet1") ' Assuming the original data is on Sheet1
+    
+    ws.Cells(1, 6).Value = "Statistics"
+    ws.Cells(1, 6).Font.Bold = True
+    ws.Cells(2, 6).Value = "Total Services:"
+    ws.Cells(2, 7).Value = Application.CountA(dataWs.Range("A2:A" & lastRow))
+    ws.Cells(3, 6).Value = "Average Service Time:"
+    ws.Cells(3, 7).Value = Application.Average(dataWs.Range("F2:F" & lastRow))
+    ws.Cells(3, 7).NumberFormat = "0.00"
+    ws.Cells(4, 6).Value = "Total Revenue:"
+    ws.Cells(4, 7).Value = Application.Sum(dataWs.Range("G2:G" & lastRow))
+    ws.Cells(4, 7).NumberFormat = "$#,##0.00"
+    
+    ' Auto-fit columns
+    ws.Cells.EntireColumn.AutoFit
+    
+    MsgBox "Report generated successfully!", vbInformation
+End Sub	
+
+==============================================================================================================
+
+Data Set
+
+Service ID	Date	Vehicle Type	Service Category	Mechanic	Service Time (hrs)	Service Cost ($)
+1001	45778	Sedan	Oil Change	John Doe	1.0	50
+1002	45778	SUV	Brake Repair	Jane Smith	2.5	200
+1003	45779	Sedan	Tire Replacement	John Doe	1.5	120
+1004	45780	Truck	Engine Tune-up	Alex Brown	3.0	350
+1005	45781	SUV	Oil Change	Jane Smith	1.0	60
+1006	45782	Sedan	Transmission Service	Alex Brown	4.0	400
+1007	45783	Truck	Brake Repair	John Doe	3.0	280
+1008	45784	SUV	Tire Rotation	Jane Smith	0.5	30
+1009	45785	Sedan	Air Conditioning Repair	Alex Brown	2.0	180
+1010	45786	Truck	Oil Change	John Doe	1.5	80
+1011	45787	SUV	Engine Diagnostic	Jane Smith	1.0	90
+1012	45788	Sedan	Brake Fluid Replacement	Alex Brown	1.0	70
+1013	45789	Truck	Suspension Repair	John Doe	5.0	550
+1014	45790	SUV	Battery Replacement	Jane Smith	0.5	150
+1015	45791	Sedan	Wheel Alignment	Alex Brown	1.5	100
+1016	45792	Sedan	Oil Change	John Doe	1.8	193
+1017	45793	SUV	Brake Repair	Jane Smith	1.8	194
+1018	45794	Sedan	Tire Replacement	John Doe	1.8	196
+1019	45795	Truck	Engine Tune-up	Alex Brown	1.7	198
+1020	45796	SUV	Oil Change	Jane Smith	1.7	199
+1021	45797	Sedan	Transmission Service	Alex Brown	1.7	201
+1022	45798	Truck	Brake Repair	John Doe	1.7	202
+1023	45799	SUV	Tire Rotation	Jane Smith	1.7	204
+1024	45800	Sedan	Air Conditioning Repair	Alex Brown	1.6	205
+1025	45801	Truck	Oil Change	John Doe	1.6	207
+1026	45802	SUV	Engine Diagnostic	Jane Smith	1.6	208
+1027	45803	Sedan	Brake Fluid Replacement	Alex Brown	1.6	210
+1028	45804	Truck	Suspension Repair	John Doe	1.6	211
+1029	45805	SUV	Battery Replacement	Jane Smith	1.6	213
+1030	45806	Sedan	Wheel Alignment	Alex Brown	1.5	214
+1031	45807	Sedan	Oil Change	John Doe	1.5	216
+1032	45808	SUV	Brake Repair	Jane Smith	1.5	218
+1033	45809	Sedan	Tire Replacement	John Doe	1.5	219
+1034	45810	Truck	Engine Tune-up	Alex Brown	1.5	221
+1035	45811	SUV	Oil Change	Jane Smith	1.5	222
+1036	45812	Sedan	Transmission Service	Alex Brown	1.4	224
+1037	45813	Truck	Brake Repair	John Doe	1.4	225
+1038	45814	SUV	Tire Rotation	Jane Smith	1.4	227
+1039	45815	Sedan	Air Conditioning Repair	Alex Brown	1.4	228
+1040	45816	Truck	Oil Change	John Doe	1.4	230
+1041	45817	SUV	Engine Diagnostic	Jane Smith	1.3	231
+1042	45818	Sedan	Brake Fluid Replacement	Alex Brown	1.3	233
+1043	45819	Truck	Suspension Repair	John Doe	1.3	234
+1044	45820	SUV	Battery Replacement	Jane Smith	1.3	236
+1045	45821	Sedan	Wheel Alignment	Alex Brown	1.3	237
+1046	45822	Sedan	Oil Change	John Doe	1.3	239
+1047	45823	SUV	Brake Repair	Jane Smith	1.2	241
+1048	45824	Sedan	Tire Replacement	John Doe	1.2	242
+1049	45825	Truck	Engine Tune-up	Alex Brown	1.2	244
+1050	45826	SUV	Oil Change	Jane Smith	1.2	245
+1051	45827	Sedan	Transmission Service	Alex Brown	1.2	247
+1052	45828	Truck	Brake Repair	John Doe	1.1	248
+1053	45829	SUV	Tire Rotation	Jane Smith	1.1	250
+1054	45830	Sedan	Air Conditioning Repair	Alex Brown	1.1	251
+1055	45831	Truck	Oil Change	John Doe	1.1	253
+1056	45832	SUV	Engine Diagnostic	Jane Smith	1.1	254
+1057	45833	Sedan	Brake Fluid Replacement	Alex Brown	1.1	256
+1058	45834	Truck	Suspension Repair	John Doe	1.0	257
+1059	45835	SUV	Battery Replacement	Jane Smith	1.0	259
+1060	45836	Sedan	Wheel Alignment	Alex Brown	1.0	261
+1061	45837	Sedan	Oil Change	John Doe	1.0	262
+1062	45838	SUV	Brake Repair	Jane Smith	1.0	264
+1063	45839	Sedan	Tire Replacement	John Doe	1.0	265
+1064	45840	Truck	Engine Tune-up	Alex Brown	0.9	267
+1065	45841	SUV	Oil Change	Jane Smith	0.9	268
+1066	45842	Sedan	Transmission Service	Alex Brown	0.9	270
+1067	45843	Truck	Brake Repair	John Doe	0.9	271
+1068	45844	SUV	Tire Rotation	Jane Smith	0.9	273
+1069	45845	Sedan	Air Conditioning Repair	Alex Brown	0.8	274
+1070	45846	Truck	Oil Change	John Doe	0.8	276
+1071	45847	SUV	Engine Diagnostic	Jane Smith	0.8	277
+1072	45848	Sedan	Brake Fluid Replacement	Alex Brown	0.8	279
+1073	45849	Truck	Suspension Repair	John Doe	0.8	280
+1074	45850	SUV	Battery Replacement	Jane Smith	0.8	282
+1075	45851	Sedan	Wheel Alignment	Alex Brown	0.7	284
+1076	45852	Sedan	Oil Change	John Doe	0.7	285
+1077	45853	SUV	Brake Repair	Jane Smith	0.7	287
+1078	45854	Sedan	Tire Replacement	John Doe	0.7	288
+1079	45855	Truck	Engine Tune-up	Alex Brown	0.7	290
+1080	45856	SUV	Oil Change	Jane Smith	0.6	291
+1081	45857	Sedan	Transmission Service	Alex Brown	0.6	293
+1082	45858	Truck	Brake Repair	John Doe	0.6	294
+1083	45859	SUV	Tire Rotation	Jane Smith	0.6	296
+1084	45860	Sedan	Air Conditioning Repair	Alex Brown	0.6	297
+1085	45861	Truck	Oil Change	John Doe	0.6	299
+1086	45862	SUV	Engine Diagnostic	Jane Smith	0.5	300
+1087	45863	Sedan	Brake Fluid Replacement	Alex Brown	0.5	302
+1088	45864	Truck	Suspension Repair	John Doe	0.5	304
+1089	45865	SUV	Battery Replacement	Jane Smith	0.5	305
+1090	45866	Sedan	Wheel Alignment	Alex Brown	0.5	307
+1091	45867	Sedan	Oil Change	John Doe	0.5	308
+1092	45868	SUV	Brake Repair	Jane Smith	0.4	310
+1093	45869	Sedan	Tire Replacement	John Doe	0.4	311
+1094	45870	Truck	Engine Tune-up	Alex Brown	0.4	313
+1095	45871	Sedan	Oil Change	John Doe	0.4	314
+1096	45872	SUV	Brake Repair	Jane Smith	0.4	316
+1097	45873	Sedan	Tire Replacement	John Doe	0.3	317
+1098	45874	Truck	Engine Tune-up	Alex Brown	0.3	319
+1099	45875	SUV	Oil Change	Jane Smith	0.3	320
+1100	45876	Sedan	Transmission Service	Alex Brown	0.3	322
+1101	45877	Truck	Brake Repair	John Doe	0.3	323
+1102	45878	SUV	Tire Rotation	Jane Smith	0.3	325
+1103	45879	Sedan	Air Conditioning Repair	Alex Brown	0.2	327
+1104	45880	Truck	Oil Change	John Doe	0.2	328
+1105	45881	SUV	Engine Diagnostic	Jane Smith	0.2	330
+1106	45882	Sedan	Brake Fluid Replacement	Alex Brown	0.2	331
+1107	45883	Truck	Suspension Repair	John Doe	0.2	333
+1108	45884	SUV	Battery Replacement	Jane Smith	1.0	334
+1109	45885	Sedan	Wheel Alignment	Alex Brown	2.5	336
+1110	45886	Sedan	Oil Change	John Doe	1.5	337
+1111	45887	SUV	Brake Repair	Jane Smith	3.0	339
+1112	45888	Sedan	Tire Replacement	John Doe	1.0	340
+1113	45889	Truck	Engine Tune-up	Alex Brown	4.0	342
+1114	45890	SUV	Oil Change	Jane Smith	3.0	343
+1115	45891	Sedan	Transmission Service	Alex Brown	0.5	345
+1116	45892	Truck	Brake Repair	John Doe	2.0	347
+1117	45893	SUV	Tire Rotation	Jane Smith	1.5	348
+1118	45894	Sedan	Air Conditioning Repair	Alex Brown	1.0	350
+1119	45895	Truck	Oil Change	John Doe	1.0	351
+1120	45896	SUV	Engine Diagnostic	Jane Smith	5.0	353
+1121	45897	Sedan	Brake Fluid Replacement	Alex Brown	0.5	354
+1122	45898	Truck	Suspension Repair	John Doe	1.5	356
+1123	45899	SUV	Battery Replacement	Jane Smith	1.8	357
+1124	45900	Sedan	Wheel Alignment	Alex Brown	1.8	359
+1125	45901	Sedan	Oil Change	John Doe	1.8	360
+1126	45902	SUV	Brake Repair	Jane Smith	1.7	362
+1127	45903	Sedan	Tire Replacement	John Doe	1.7	363
+1128	45904	Truck	Engine Tune-up	Alex Brown	1.7	365
+1129	45905	SUV	Oil Change	Jane Smith	1.7	366
+1130	45906	Sedan	Transmission Service	Alex Brown	1.7	368
+1131	45907	Truck	Brake Repair	John Doe	1.6	370
+1132	45908	SUV	Tire Rotation	Jane Smith	1.6	371
+1133	45909	Sedan	Air Conditioning Repair	Alex Brown	1.6	373
+1134	45910	Truck	Oil Change	John Doe	1.6	374
+1135	45911	SUV	Engine Diagnostic	Jane Smith	1.6	376
+1136	45912	Sedan	Brake Fluid Replacement	Alex Brown	1.6	377
+1137	45913	Truck	Suspension Repair	John Doe	1.5	379
+1138	45914	SUV	Battery Replacement	Jane Smith	1.5	380
+1139	45915	Sedan	Wheel Alignment	Alex Brown	1.5	382
+1140	45916	Sedan	Oil Change	John Doe	1.5	383
+1141	45917	SUV	Brake Repair	Jane Smith	1.5	385
+1142	45918	Sedan	Tire Replacement	John Doe	1.5	386
+1143	45919	Truck	Engine Tune-up	Alex Brown	1.4	388
+1144	45920	SUV	Oil Change	Jane Smith	1.4	390
+1145	45921	Sedan	Transmission Service	Alex Brown	1.4	391
+1146	45922	Truck	Brake Repair	John Doe	1.4	393
+1147	45923	SUV	Tire Rotation	Jane Smith	1.4	394
+1148	45924	Sedan	Air Conditioning Repair	Alex Brown	1.3	396
+1149	45925	Truck	Oil Change	John Doe	1.3	397
+1150	45926	SUV	Engine Diagnostic	Jane Smith	1.3	399
+1151	45927	Sedan	Brake Fluid Replacement	Alex Brown	1.3	400
+1152	45928	Truck	Suspension Repair	John Doe	1.3	402
+1153	45929	SUV	Battery Replacement	Jane Smith	1.3	403
+1154	45930	Sedan	Wheel Alignment	Alex Brown	1.2	405
+1155	45931	Sedan	Oil Change	John Doe	1.2	406
+1156	45932	SUV	Brake Repair	Jane Smith	1.2	408
+1157	45933	Sedan	Tire Replacement	John Doe	1.2	409
+1158	45934	Truck	Engine Tune-up	Alex Brown	1.2	411
+1159	45935	SUV	Oil Change	Jane Smith	1.1	413
+1160	45936	Sedan	Transmission Service	Alex Brown	1.1	414
+1161	45937	Truck	Brake Repair	John Doe	1.1	416
+1162	45938	SUV	Tire Rotation	Jane Smith	1.1	417
+1163	45939	Sedan	Air Conditioning Repair	Alex Brown	1.1	419
+1164	45940	Truck	Oil Change	John Doe	1.1	420
+1165	45941	SUV	Engine Diagnostic	Jane Smith	1.0	422
+1166	45942	Sedan	Brake Fluid Replacement	Alex Brown	1.0	423
+1167	45943	Truck	Suspension Repair	John Doe	1.0	425
+1168	45944	SUV	Battery Replacement	Jane Smith	1.0	426
+1169	45945	Sedan	Wheel Alignment	Alex Brown	1.0	428
+1170	45946	Sedan	Oil Change	John Doe	1.0	429
+1171	45947	SUV	Brake Repair	Jane Smith	0.9	431
+1172	45948	Sedan	Tire Replacement	John Doe	0.9	433
+1173	45949	Truck	Engine Tune-up	Alex Brown	0.9	434
+1174	45950	SUV	Oil Change	Jane Smith	0.9	436
+1175	45951	Sedan	Transmission Service	Alex Brown	0.9	437
+1176	45952	Truck	Brake Repair	John Doe	0.8	439
+1177	45953	SUV	Tire Rotation	Jane Smith	0.8	440
+1178	45954	Sedan	Air Conditioning Repair	Alex Brown	0.8	442
+1179	45955	Truck	Oil Change	John Doe	0.8	443
+1180	45956	SUV	Engine Diagnostic	Jane Smith	0.8	445
+1181	45957	Sedan	Brake Fluid Replacement	Alex Brown	0.8	446
+1182	45958	Truck	Suspension Repair	John Doe	0.7	448
+1183	45959	SUV	Battery Replacement	Jane Smith	0.7	449
+1184	45960	Sedan	Wheel Alignment	Alex Brown	0.7	451
+1185	45961	Sedan	Oil Change	John Doe	0.7	452
+1186	45962	SUV	Brake Repair	Jane Smith	0.7	454
+1187	45963	Sedan	Tire Replacement	John Doe	0.6	456
+1188	45964	Truck	Engine Tune-up	Alex Brown	0.6	457
+1189	45965	Sedan	Oil Change	John Doe	0.6	459
+1190	45966	SUV	Brake Repair	Jane Smith	0.6	460
+1191	45967	Sedan	Tire Replacement	John Doe	0.6	462
+1192	45968	Truck	Engine Tune-up	Alex Brown	0.6	463
+1193	45969	SUV	Oil Change	Jane Smith	0.5	465
+1194	45970	Sedan	Transmission Service	Alex Brown	0.5	466
+1195	45971	Truck	Brake Repair	John Doe	0.5	468
+1196	45972	SUV	Tire Rotation	Jane Smith	0.5	469
+1197	45973	Sedan	Air Conditioning Repair	Alex Brown	0.5	471
+1198	45974	Truck	Oil Change	John Doe	0.5	472
+1199	45975	SUV	Engine Diagnostic	Jane Smith	0.4	474
+1200	45976	Sedan	Brake Fluid Replacement	Alex Brown	0.4	476
+1201	45977	Truck	Suspension Repair	John Doe	0.4	477
+1202	45978	SUV	Battery Replacement	Jane Smith	0.4	479
+1203	45979	Sedan	Wheel Alignment	Alex Brown	0.4	480
+1204	45980	Sedan	Oil Change	John Doe	0.3	482
+1205	45981	SUV	Brake Repair	Jane Smith	0.3	483
+1206	45982	Sedan	Tire Replacement	John Doe	0.3	485
+1207	45983	Truck	Engine Tune-up	Alex Brown	0.3	486
+1208	45984	SUV	Oil Change	Jane Smith	0.3	488
+1209	45985	Sedan	Transmission Service	Alex Brown	0.3	489
+1210	45986	Truck	Brake Repair	John Doe	0.2	491
+1211	45987	SUV	Tire Rotation	Jane Smith	0.2	492
+1212	45988	Sedan	Air Conditioning Repair	Alex Brown	0.2	494
+1213	45989	Truck	Oil Change	John Doe	0.2	495
+1214	45990	SUV	Engine Diagnostic	Jane Smith	0.2	497
+1215	45991	Sedan	Brake Fluid Replacement	Alex Brown	1.0	499
+1216	45992	Truck	Suspension Repair	John Doe	2.5	500
+1217	45993	SUV	Battery Replacement	Jane Smith	1.5	502
+1218	45994	Sedan	Wheel Alignment	Alex Brown	3.0	503
+1219	45995	Sedan	Oil Change	John Doe	1.0	505
+1220	45996	SUV	Brake Repair	Jane Smith	4.0	506
+1221	45997	Sedan	Tire Replacement	John Doe	3.0	508
+1222	45998	Truck	Engine Tune-up	Alex Brown	0.5	509
+1223	45999	SUV	Oil Change	Jane Smith	2.0	511
+1224	46000	Sedan	Transmission Service	Alex Brown	1.5	512
+1225	46001	Truck	Brake Repair	John Doe	1.0	514
+1226	46002	SUV	Tire Rotation	Jane Smith	1.0	515
+1227	46003	Sedan	Air Conditioning Repair	Alex Brown	5.0	517
+1228	46004	Truck	Oil Change	John Doe	0.5	519
+1229	46005	SUV	Engine Diagnostic	Jane Smith	1.5	520
+1230	46006	Sedan	Brake Fluid Replacement	Alex Brown	1.8	522
+1231	46007	Truck	Suspension Repair	John Doe	1.8	523
+1232	46008	SUV	Battery Replacement	Jane Smith	1.8	525
+1233	46009	Sedan	Wheel Alignment	Alex Brown	1.7	526
+1234	46010	Sedan	Oil Change	John Doe	1.7	528
+1235	46011	SUV	Brake Repair	Jane Smith	1.7	529
+1236	46012	Sedan	Tire Replacement	John Doe	1.7	531
+1237	46013	Truck	Engine Tune-up	Alex Brown	1.7	532
+1238	46014	SUV	Oil Change	Jane Smith	1.6	534
+1239	46015	Sedan	Transmission Service	Alex Brown	1.6	535
+1240	46016	Truck	Brake Repair	John Doe	1.6	537
+1241	46017	SUV	Tire Rotation	Jane Smith	1.6	538
+1242	46018	Sedan	Air Conditioning Repair	Alex Brown	1.6	540
+1243	46019	Truck	Oil Change	John Doe	1.6	542
+1244	46020	SUV	Engine Diagnostic	Jane Smith	1.5	543
+1245	46021	Sedan	Brake Fluid Replacement	Alex Brown	1.5	545
+1246	46022	Truck	Suspension Repair	John Doe	1.5	546
+1247	46023	SUV	Battery Replacement	Jane Smith	1.5	548
+1248	46024	Sedan	Wheel Alignment	Alex Brown	1.5	549
+1249	46025	Sedan	Oil Change	John Doe	1.5	551
+1250	46026	SUV	Brake Repair	Jane Smith	1.4	552
+1251	46027	Sedan	Tire Replacement	John Doe	1.4	554
+1252	46028	Truck	Engine Tune-up	Alex Brown	1.4	555
+1253	46029	SUV	Oil Change	Jane Smith	1.4	557
+1254	46030	Sedan	Transmission Service	Alex Brown	1.4	558
+1255	46031	Truck	Brake Repair	John Doe	1.3	560
+1256	46032	SUV	Tire Rotation	Jane Smith	1.3	562
+1257	46033	Sedan	Air Conditioning Repair	Alex Brown	1.3	563
+1258	46034	Truck	Oil Change	John Doe	1.3	565
+1259	46035	SUV	Engine Diagnostic	Jane Smith	1.3	566
+1260	46036	Sedan	Brake Fluid Replacement	Alex Brown	1.3	568
+1261	46037	Truck	Suspension Repair	John Doe	1.2	569
+1262	46038	SUV	Battery Replacement	Jane Smith	1.2	571
+1263	46039	Sedan	Wheel Alignment	Alex Brown	1.2	572
+1264	46040	Sedan	Oil Change	John Doe	1.2	574
+1265	46041	SUV	Brake Repair	Jane Smith	1.2	575
+1266	46042	Sedan	Tire Replacement	John Doe	1.1	577
+1267	46043	Truck	Engine Tune-up	Alex Brown	1.1	578
+1268	46044	SUV	Oil Change	Jane Smith	1.1	580
+1269	46045	Sedan	Transmission Service	Alex Brown	1.1	581
+1270	46046	Truck	Brake Repair	John Doe	1.1	583
+1271	46047	SUV	Tire Rotation	Jane Smith	1.1	585
+1272	46048	Sedan	Air Conditioning Repair	Alex Brown	1.0	586
+1273	46049	Truck	Oil Change	John Doe	1.0	588
+1274	46050	SUV	Engine Diagnostic	Jane Smith	1.0	589
+1275	46051	Sedan	Brake Fluid Replacement	Alex Brown	1.0	591
+1276	46052	Truck	Suspension Repair	John Doe	1.0	592
+1277	46053	SUV	Battery Replacement	Jane Smith	1.0	594
+1278	46054	Sedan	Wheel Alignment	Alex Brown	0.9	595
+1279	46055	Sedan	Oil Change	John Doe	0.9	597
+1280	46056	SUV	Brake Repair	Jane Smith	0.9	598
+1281	46057	Sedan	Tire Replacement	John Doe	0.9	600
+1282	46058	Truck	Engine Tune-up	Alex Brown	0.9	601
+1283	46059	Sedan	Oil Change	John Doe	0.8	603
+1284	46060	SUV	Brake Repair	Jane Smith	0.8	605
+1285	46061	Sedan	Tire Replacement	John Doe	0.8	606
+1286	46062	Truck	Engine Tune-up	Alex Brown	0.8	608
+1287	46063	SUV	Oil Change	Jane Smith	0.8	609
+1288	46064	Sedan	Transmission Service	Alex Brown	0.8	611
+1289	46065	Truck	Brake Repair	John Doe	0.7	612
+1290	46066	SUV	Tire Rotation	Jane Smith	0.7	614
+1291	46067	Sedan	Air Conditioning Repair	Alex Brown	0.7	615
+1292	46068	Truck	Oil Change	John Doe	0.7	617
+1293	46069	SUV	Engine Diagnostic	Jane Smith	0.7	618
+1294	46070	Sedan	Brake Fluid Replacement	Alex Brown	0.6	620
+1295	46071	Truck	Suspension Repair	John Doe	0.6	621
+1296	46072	SUV	Battery Replacement	Jane Smith	0.6	623
+1297	46073	Sedan	Wheel Alignment	Alex Brown	0.6	624
+1298	46074	Sedan	Oil Change	John Doe	0.6	626
+1299	46075	SUV	Brake Repair	Jane Smith	0.6	628
+1300	46076	Sedan	Tire Replacement	John Doe	0.5	629
+1301	46077	Truck	Engine Tune-up	Alex Brown	0.5	631
+1302	46078	SUV	Oil Change	Jane Smith	0.5	632
+1303	46079	Sedan	Transmission Service	Alex Brown	0.5	634
+1304	46080	Truck	Brake Repair	John Doe	0.5	635
+1305	46081	SUV	Tire Rotation	Jane Smith	0.5	637
+1306	46082	Sedan	Air Conditioning Repair	Alex Brown	0.4	638
+1307	46083	Truck	Oil Change	John Doe	0.4	640
+1308	46084	SUV	Engine Diagnostic	Jane Smith	0.4	641
+1309	46085	Sedan	Brake Fluid Replacement	Alex Brown	0.4	643
+1310	46086	Truck	Suspension Repair	John Doe	0.4	644
+1311	46087	SUV	Battery Replacement	Jane Smith	0.3	646
+1312	46088	Sedan	Wheel Alignment	Alex Brown	0.3	648
+1313	46089	Sedan	Oil Change	John Doe	0.3	649
+1314	46090	SUV	Brake Repair	Jane Smith	0.3	651
+1315	46091	Sedan	Tire Replacement	John Doe	0.3	652
+1316	46092	Truck	Engine Tune-up	Alex Brown	0.3	654
+1317	46093	SUV	Oil Change	Jane Smith	0.2	655
+1318	46094	Sedan	Transmission Service	Alex Brown	0.2	657
+1319	46095	Truck	Brake Repair	John Doe	0.2	658
+1320	46096	SUV	Tire Rotation	Jane Smith	0.2	660
+1321	46097	Sedan	Air Conditioning Repair	Alex Brown	0.2	661
+1322	46098	Truck	Oil Change	John Doe	1.0	663
+1323	46099	SUV	Engine Diagnostic	Jane Smith	2.5	664
+1324	46100	Sedan	Brake Fluid Replacement	Alex Brown	1.5	666
+1325	46101	Truck	Suspension Repair	John Doe	3.0	667
+1326	46102	SUV	Battery Replacement	Jane Smith	1.0	669
+1327	46103	Sedan	Wheel Alignment	Alex Brown	4.0	671
+1328	46104	Sedan	Oil Change	John Doe	3.0	672
+1329	46105	SUV	Brake Repair	Jane Smith	0.5	674
+1330	46106	Sedan	Tire Replacement	John Doe	2.0	675
+1331	46107	Truck	Engine Tune-up	Alex Brown	1.5	677
+1332	46108	SUV	Oil Change	Jane Smith	1.0	678
+1333	46109	Sedan	Transmission Service	Alex Brown	1.0	680
+1334	46110	Truck	Brake Repair	John Doe	5.0	681
+1335	46111	SUV	Tire Rotation	Jane Smith	0.5	683
+1336	46112	Sedan	Air Conditioning Repair	Alex Brown	1.5	684
+1337	46113	Truck	Oil Change	John Doe	1.8	686
+1338	46114	SUV	Engine Diagnostic	Jane Smith	1.8	687
+1339	46115	Sedan	Brake Fluid Replacement	Alex Brown	1.8	689
+1340	46116	Truck	Suspension Repair	John Doe	1.7	691
+1341	46117	SUV	Battery Replacement	Jane Smith	1.7	692
+1342	46118	Sedan	Wheel Alignment	Alex Brown	1.7	694
+1343	46119	Sedan	Oil Change	John Doe	1.7	695
+1344	46120	SUV	Brake Repair	Jane Smith	1.7	697
+1345	46121	Sedan	Tire Replacement	John Doe	1.6	698
+1346	46122	Truck	Engine Tune-up	Alex Brown	1.6	700
+1347	46123	SUV	Oil Change	Jane Smith	1.6	701
+1348	46124	Sedan	Transmission Service	Alex Brown	1.6	703
+1349	46125	Truck	Brake Repair	John Doe	1.6	704
+1350	46126	SUV	Tire Rotation	Jane Smith	1.6	706
+1351	46127	Sedan	Air Conditioning Repair	Alex Brown	1.5	707
+1352	46128	Truck	Oil Change	John Doe	1.5	709
+1353	46129	SUV	Engine Diagnostic	Jane Smith	1.5	710
+1354	46130	Sedan	Brake Fluid Replacement	Alex Brown	1.5	712
+1355	46131	Truck	Suspension Repair	John Doe	1.5	714
+1356	46132	SUV	Battery Replacement	Jane Smith	1.5	715
+1357	46133	Sedan	Wheel Alignment	Alex Brown	1.4	717
+1358	46134	Sedan	Oil Change	John Doe	1.4	718
+1359	46135	SUV	Brake Repair	Jane Smith	1.4	720
+1360	46136	Sedan	Tire Replacement	John Doe	1.4	721
+1361	46137	Truck	Engine Tune-up	Alex Brown	1.4	723
+1362	46138	SUV	Oil Change	Jane Smith	1.3	724
+1363	46139	Sedan	Transmission Service	Alex Brown	1.3	726
+1364	46140	Truck	Brake Repair	John Doe	1.3	727
+1365	46141	SUV	Tire Rotation	Jane Smith	1.3	729
+1366	46142	Sedan	Air Conditioning Repair	Alex Brown	1.3	730
+1367	46143	Truck	Oil Change	John Doe	1.3	732
+1368	46144	SUV	Engine Diagnostic	Jane Smith	1.2	734
+1369	46145	Sedan	Brake Fluid Replacement	Alex Brown	1.2	735
+1370	46146	Truck	Suspension Repair	John Doe	1.2	737
+1371	46147	SUV	Battery Replacement	Jane Smith	1.2	738
+1372	46148	Sedan	Wheel Alignment	Alex Brown	1.2	740
+1373	46149	Sedan	Oil Change	John Doe	1.1	741
+1374	46150	SUV	Brake Repair	Jane Smith	1.1	743
+1375	46151	Sedan	Tire Replacement	John Doe	1.1	744
+1376	46152	Truck	Engine Tune-up	Alex Brown	1.1	746
+1377	46153	Sedan	Oil Change	John Doe	1.1	747
+1378	46154	SUV	Brake Repair	Jane Smith	1.1	749
+1379	46155	Sedan	Tire Replacement	John Doe	1.0	750
+1380	46156	Truck	Engine Tune-up	Alex Brown	1.0	752
+1381	46157	SUV	Oil Change	Jane Smith	1.0	753
+1382	46158	Sedan	Transmission Service	Alex Brown	1.0	755
+1383	46159	Truck	Brake Repair	John Doe	1.0	757
+1384	46160	SUV	Tire Rotation	Jane Smith	1.0	758
+1385	46161	Sedan	Air Conditioning Repair	Alex Brown	0.9	760
+1386	46162	Truck	Oil Change	John Doe	0.9	761
+1387	46163	SUV	Engine Diagnostic	Jane Smith	0.9	763
+1388	46164	Sedan	Brake Fluid Replacement	Alex Brown	0.9	764
+1389	46165	Truck	Suspension Repair	John Doe	0.9	766
+1390	46166	SUV	Battery Replacement	Jane Smith	0.8	767
+1391	46167	Sedan	Wheel Alignment	Alex Brown	0.8	769
+1392	46168	Sedan	Oil Change	John Doe	0.8	770
+1393	46169	SUV	Brake Repair	Jane Smith	0.8	772
+1394	46170	Sedan	Tire Replacement	John Doe	0.8	773
+1395	46171	Truck	Engine Tune-up	Alex Brown	0.8	775
+1396	46172	SUV	Oil Change	Jane Smith	0.7	777
+1397	46173	Sedan	Transmission Service	Alex Brown	0.7	778
+1398	46174	Truck	Brake Repair	John Doe	0.7	780
+1399	46175	SUV	Tire Rotation	Jane Smith	0.7	781
+1400	46176	Sedan	Air Conditioning Repair	Alex Brown	0.7	783
+1401	46177	Truck	Oil Change	John Doe	0.6	784
+1402	46178	SUV	Engine Diagnostic	Jane Smith	0.6	786
+1403	46179	Sedan	Brake Fluid Replacement	Alex Brown	0.6	787
+1404	46180	Truck	Suspension Repair	John Doe	0.6	789
+1405	46181	SUV	Battery Replacement	Jane Smith	0.6	790
+1406	46182	Sedan	Wheel Alignment	Alex Brown	0.6	792
+1407	46183	Sedan	Oil Change	John Doe	0.5	793
+1408	46184	SUV	Brake Repair	Jane Smith	0.5	795
+1409	46185	Sedan	Tire Replacement	John Doe	0.5	796
+1410	46186	Truck	Engine Tune-up	Alex Brown	0.5	798
+1411	46187	SUV	Oil Change	Jane Smith	0.5	800
+1412	46188	Sedan	Transmission Service	Alex Brown	0.5	801
+1413	46189	Truck	Brake Repair	John Doe	0.4	803
+1414	46190	SUV	Tire Rotation	Jane Smith	0.4	804
+1415	46191	Sedan	Air Conditioning Repair	Alex Brown	0.4	806
+1416	46192	Truck	Oil Change	John Doe	0.4	807
+1417	46193	SUV	Engine Diagnostic	Jane Smith	0.4	809
+1418	46194	Sedan	Brake Fluid Replacement	Alex Brown	0.3	810
+1419	46195	Truck	Suspension Repair	John Doe	0.3	812
+1420	46196	SUV	Battery Replacement	Jane Smith	0.3	813
+1421	46197	Sedan	Wheel Alignment	Alex Brown	0.3	815
+1422	46198	Sedan	Oil Change	John Doe	0.3	816
+1423	46199	SUV	Brake Repair	Jane Smith	0.3	818
+1424	46200	Sedan	Tire Replacement	John Doe	0.2	820
+1425	46201	Truck	Engine Tune-up	Alex Brown	0.2	821
+1426	46202	SUV	Oil Change	Jane Smith	0.2	823
+1427	46203	Sedan	Transmission Service	Alex Brown	0.2	824
+1428	46204	Truck	Brake Repair	John Doe	0.2	826
+1429	46205	SUV	Tire Rotation	Jane Smith	1.0	827
+1430	46206	Sedan	Air Conditioning Repair	Alex Brown	2.5	829
+1431	46207	Truck	Oil Change	John Doe	1.5	830
+1432	46208	SUV	Engine Diagnostic	Jane Smith	3.0	832
+1433	46209	Sedan	Brake Fluid Replacement	Alex Brown	1.0	833
+1434	46210	Truck	Suspension Repair	John Doe	4.0	835
+1435	46211	SUV	Battery Replacement	Jane Smith	3.0	836
+1436	46212	Sedan	Wheel Alignment	Alex Brown	0.5	838
+1437	46213	Sedan	Oil Change	John Doe	2.0	839
+1438	46214	SUV	Brake Repair	Jane Smith	1.5	841
+1439	46215	Sedan	Tire Replacement	John Doe	1.0	843
+1440	46216	Truck	Engine Tune-up	Alex Brown	1.0	844
+1441	46217	SUV	Oil Change	Jane Smith	5.0	846
+1442	46218	Sedan	Transmission Service	Alex Brown	0.5	847
+1443	46219	Truck	Brake Repair	John Doe	1.5	849
+1444	46220	SUV	Tire Rotation	Jane Smith	1.8	850
+1445	46221	Sedan	Air Conditioning Repair	Alex Brown	1.8	852
+1446	46222	Truck	Oil Change	John Doe	1.8	853
+1447	46223	SUV	Engine Diagnostic	Jane Smith	1.7	855
+1448	46224	Sedan	Brake Fluid Replacement	Alex Brown	1.7	856
+1449	46225	Truck	Suspension Repair	John Doe	1.7	858
+1450	46226	SUV	Battery Replacement	Jane Smith	1.7	859
+1451	46227	Sedan	Wheel Alignment	Alex Brown	1.7	861
+1452	46228	Sedan	Oil Change	John Doe	1.6	863
+1453	46229	SUV	Brake Repair	Jane Smith	1.6	864
+1454	46230	Sedan	Tire Replacement	John Doe	1.6	866
+1455	46231	Truck	Engine Tune-up	Alex Brown	1.6	867
+1456	46232	SUV	Oil Change	Jane Smith	1.6	869
+1457	46233	Sedan	Transmission Service	Alex Brown	1.6	870
+1458	46234	Truck	Brake Repair	John Doe	1.5	872
+1459	46235	SUV	Tire Rotation	Jane Smith	1.5	873
+1460	46236	Sedan	Air Conditioning Repair	Alex Brown	1.5	875
+1461	46237	Truck	Oil Change	John Doe	1.5	876
+1462	46238	SUV	Engine Diagnostic	Jane Smith	1.5	878
+1463	46239	Sedan	Brake Fluid Replacement	Alex Brown	1.5	879
+1464	46240	Truck	Suspension Repair	John Doe	1.4	881
+1465	46241	SUV	Battery Replacement	Jane Smith	1.4	882
+1466	46242	Sedan	Wheel Alignment	Alex Brown	1.4	884
+1467	46243	Sedan	Oil Change	John Doe	1.4	886
+1468	46244	SUV	Brake Repair	Jane Smith	1.4	887
+1469	46245	Sedan	Tire Replacement	John Doe	1.3	889
+1470	46246	Truck	Engine Tune-up	Alex Brown	1.3	890
+1471	46247	Sedan	Oil Change	John Doe	1.3	892
+1472	46248	SUV	Brake Repair	Jane Smith	1.3	893
+1473	46249	Sedan	Tire Replacement	John Doe	1.3	895
+1474	46250	Truck	Engine Tune-up	Alex Brown	1.3	896
+1475	46251	SUV	Oil Change	Jane Smith	1.2	898
+1476	46252	Sedan	Transmission Service	Alex Brown	1.2	899
+1477	46253	Truck	Brake Repair	John Doe	1.2	901
+1478	46254	SUV	Tire Rotation	Jane Smith	1.2	902
+1479	46255	Sedan	Air Conditioning Repair	Alex Brown	1.2	904
+1480	46256	Truck	Oil Change	John Doe	1.1	906
+1481	46257	SUV	Engine Diagnostic	Jane Smith	1.1	907
+1482	46258	Sedan	Brake Fluid Replacement	Alex Brown	1.1	909
+1483	46259	Truck	Suspension Repair	John Doe	1.1	910
+1484	46260	SUV	Battery Replacement	Jane Smith	1.1	912
+1485	46261	Sedan	Wheel Alignment	Alex Brown	1.1	913
+1486	46262	Sedan	Oil Change	John Doe	1.0	915
+1487	46263	SUV	Brake Repair	Jane Smith	1.0	916
+1488	46264	Sedan	Tire Replacement	John Doe	1.0	918
+1489	46265	Truck	Engine Tune-up	Alex Brown	1.0	919
+1490	46266	SUV	Oil Change	Jane Smith	1.0	921
+1491	46267	Sedan	Transmission Service	Alex Brown	1.0	922
+1492	46268	Truck	Brake Repair	John Doe	0.9	924
+1493	46269	SUV	Tire Rotation	Jane Smith	0.9	925
+1494	46270	Sedan	Air Conditioning Repair	Alex Brown	0.9	927
+1495	46271	Truck	Oil Change	John Doe	0.9	929
+1496	46272	SUV	Engine Diagnostic	Jane Smith	0.9	930
+1497	46273	Sedan	Brake Fluid Replacement	Alex Brown	0.8	932
+1498	46274	Truck	Suspension Repair	John Doe	0.8	933
+1499	46275	SUV	Battery Replacement	Jane Smith	0.8	935
+1500	46276	Sedan	Wheel Alignment	Alex Brown	0.8	936
+1501	46277	Sedan	Oil Change	John Doe	0.8	938
+1502	46278	SUV	Brake Repair	Jane Smith	0.8	939
+1503	46279	Sedan	Tire Replacement	John Doe	0.7	941
+1504	46280	Truck	Engine Tune-up	Alex Brown	0.7	942
+1505	46281	SUV	Oil Change	Jane Smith	0.7	944
+1506	46282	Sedan	Transmission Service	Alex Brown	0.7	945
+1507	46283	Truck	Brake Repair	John Doe	0.7	947
+1508	46284	SUV	Tire Rotation	Jane Smith	0.6	949
+1509	46285	Sedan	Air Conditioning Repair	Alex Brown	0.6	950
+1510	46286	Truck	Oil Change	John Doe	0.6	952
+1511	46287	SUV	Engine Diagnostic	Jane Smith	0.6	953
+1512	46288	Sedan	Brake Fluid Replacement	Alex Brown	0.6	955
+1513	46289	Truck	Suspension Repair	John Doe	0.6	956
+1514	46290	SUV	Battery Replacement	Jane Smith	0.5	958
+1515	46291	Sedan	Wheel Alignment	Alex Brown	0.5	959
+1516	46292	Sedan	Oil Change	John Doe	0.5	961
+1517	46293	SUV	Brake Repair	Jane Smith	0.5	962
+1518	46294	Sedan	Tire Replacement	John Doe	0.5	964
+1519	46295	Truck	Engine Tune-up	Alex Brown	0.5	965
+1520	46296	SUV	Oil Change	Jane Smith	0.4	967
+1521	46297	Sedan	Transmission Service	Alex Brown	0.4	968
+1522	46298	Truck	Brake Repair	John Doe	0.4	970
+1523	46299	SUV	Tire Rotation	Jane Smith	0.4	972
+1524	46300	Sedan	Air Conditioning Repair	Alex Brown	0.4	973
+1525	46301	Truck	Oil Change	John Doe	0.3	975
+1526	46302	SUV	Engine Diagnostic	Jane Smith	0.3	976
+1527	46303	Sedan	Brake Fluid Replacement	Alex Brown	0.3	978
+1528	46304	Truck	Suspension Repair	John Doe	0.3	979
+1529	46305	SUV	Battery Replacement	Jane Smith	0.3	981
+1530	46306	Sedan	Wheel Alignment	Alex Brown	0.3	982
+1531	46307	Sedan	Oil Change	John Doe	0.2	984
+1532	46308	SUV	Brake Repair	Jane Smith	0.2	985
+1533	46309	Sedan	Tire Replacement	John Doe	0.2	987
+1534	46310	Truck	Engine Tune-up	Alex Brown	0.2	988
+1535	46311	SUV	Oil Change	Jane Smith	0.2	990
+1536	46312	Sedan	Transmission Service	Alex Brown	1.0	992
+1537	46313	Truck	Brake Repair	John Doe	2.5	993
+1538	46314	SUV	Tire Rotation	Jane Smith	1.5	995
+1539	46315	Sedan	Air Conditioning Repair	Alex Brown	3.0	996
+1540	46316	Truck	Oil Change	John Doe	1.0	998
+1541	46317	SUV	Engine Diagnostic	Jane Smith	4.0	999
+1542	46318	Sedan	Brake Fluid Replacement	Alex Brown	3.0	1001
+1543	46319	Truck	Suspension Repair	John Doe	0.5	1002
+1544	46320	SUV	Battery Replacement	Jane Smith	2.0	1004
+1545	46321	Sedan	Wheel Alignment	Alex Brown	1.5	1005
+1546	46322	Sedan	Oil Change	John Doe	1.0	1007
+1547	46323	SUV	Brake Repair	Jane Smith	1.0	1008
+1548	46324	Sedan	Tire Replacement	John Doe	5.0	1010
+1549	46325	Truck	Engine Tune-up	Alex Brown	0.5	1011
+1550	46326	SUV	Oil Change	Jane Smith	1.5	1013
+1551	46327	Sedan	Transmission Service	Alex Brown	1.8	1015
+1552	46328	Truck	Brake Repair	John Doe	1.8	1016
+1553	46329	SUV	Tire Rotation	Jane Smith	1.8	1018
+1554	46330	Sedan	Air Conditioning Repair	Alex Brown	1.7	1019
+1555	46331	Truck	Oil Change	John Doe	1.7	1021
+1556	46332	SUV	Engine Diagnostic	Jane Smith	1.7	1022
+1557	46333	Sedan	Brake Fluid Replacement	Alex Brown	1.7	1024
+1558	46334	Truck	Suspension Repair	John Doe	1.7	1025
+1559	46335	SUV	Battery Replacement	Jane Smith	1.6	1027
+1560	46336	Sedan	Wheel Alignment	Alex Brown	1.6	1028
+1561	46337	Sedan	Oil Change	John Doe	1.6	1030
+1562	46338	SUV	Brake Repair	Jane Smith	1.6	1031
+1563	46339	Sedan	Tire Replacement	John Doe	1.6	1033
+1564	46340	Truck	Engine Tune-up	Alex Brown	1.6	1035
+1565	46341	Sedan	Oil Change	John Doe	1.5	1036
+1566	46342	SUV	Brake Repair	Jane Smith	1.5	1038
+1567	46343	Sedan	Tire Replacement	John Doe	1.5	1039
+1568	46344	Truck	Engine Tune-up	Alex Brown	1.5	1041
+1569	46345	SUV	Oil Change	Jane Smith	1.5	1042
+1570	46346	Sedan	Transmission Service	Alex Brown	1.5	1044
+1571	46347	Truck	Brake Repair	John Doe	1.4	1045
+1572	46348	SUV	Tire Rotation	Jane Smith	1.4	1047
+1573	46349	Sedan	Air Conditioning Repair	Alex Brown	1.4	1048
+1574	46350	Truck	Oil Change	John Doe	1.4	1050
+1575	46351	SUV	Engine Diagnostic	Jane Smith	1.4	1051
+1576	46352	Sedan	Brake Fluid Replacement	Alex Brown	1.3	1053
+1577	46353	Truck	Suspension Repair	John Doe	1.3	1054
+1578	46354	SUV	Battery Replacement	Jane Smith	1.3	1056
+1579	46355	Sedan	Wheel Alignment	Alex Brown	1.3	1058
+1580	46356	Sedan	Oil Change	John Doe	1.3	1059
+1581	46357	SUV	Brake Repair	Jane Smith	1.3	1061
+1582	46358	Sedan	Tire Replacement	John Doe	1.2	1062
+1583	46359	Truck	Engine Tune-up	Alex Brown	1.2	1064
+1584	46360	SUV	Oil Change	Jane Smith	1.2	1065
+1585	46361	Sedan	Transmission Service	Alex Brown	1.2	1067
+1586	46362	Truck	Brake Repair	John Doe	1.2	1068
+1587	46363	SUV	Tire Rotation	Jane Smith	1.1	1070
+1588	46364	Sedan	Air Conditioning Repair	Alex Brown	1.1	1071
+1589	46365	Truck	Oil Change	John Doe	1.1	1073
+1590	46366	SUV	Engine Diagnostic	Jane Smith	1.1	1074
+1591	46367	Sedan	Brake Fluid Replacement	Alex Brown	1.1	1076
+1592	46368	Truck	Suspension Repair	John Doe	1.1	1078
+1593	46369	SUV	Battery Replacement	Jane Smith	1.0	1079
+1594	46370	Sedan	Wheel Alignment	Alex Brown	1.0	1081
+1595	46371	Sedan	Oil Change	John Doe	1.0	1082
+1596	46372	SUV	Brake Repair	Jane Smith	1.0	1084
+1597	46373	Sedan	Tire Replacement	John Doe	1.0	1085
+1598	46374	Truck	Engine Tune-up	Alex Brown	1.0	1087
+1599	46375	SUV	Oil Change	Jane Smith	0.9	1088
+1600	46376	Sedan	Transmission Service	Alex Brown	0.9	1090
+1601	46377	Truck	Brake Repair	John Doe	0.9	1091
+1602	46378	SUV	Tire Rotation	Jane Smith	0.9	1093
+1603	46379	Sedan	Air Conditioning Repair	Alex Brown	0.9	1094
+1604	46380	Truck	Oil Change	John Doe	0.8	1096
+1605	46381	SUV	Engine Diagnostic	Jane Smith	0.8	1097
+1606	46382	Sedan	Brake Fluid Replacement	Alex Brown	0.8	1099
+1607	46383	Truck	Suspension Repair	John Doe	0.8	1101
+1608	46384	SUV	Battery Replacement	Jane Smith	0.8	1102
+1609	46385	Sedan	Wheel Alignment	Alex Brown	0.8	1104
+1610	46386	Sedan	Oil Change	John Doe	0.7	1105
+1611	46387	SUV	Brake Repair	Jane Smith	0.7	1107
+1612	46388	Sedan	Tire Replacement	John Doe	0.7	1108
+1613	46389	Truck	Engine Tune-up	Alex Brown	0.7	1110
+1614	46390	SUV	Oil Change	Jane Smith	0.7	1111
+1615	46391	Sedan	Transmission Service	Alex Brown	0.6	1113
+1616	46392	Truck	Brake Repair	John Doe	0.6	1114
+1617	46393	SUV	Tire Rotation	Jane Smith	0.6	1116
+1618	46394	Sedan	Air Conditioning Repair	Alex Brown	0.6	1117
+1619	46395	Truck	Oil Change	John Doe	0.6	1119
+1620	46396	SUV	Engine Diagnostic	Jane Smith	0.6	1121
+1621	46397	Sedan	Brake Fluid Replacement	Alex Brown	0.5	1122
+1622	46398	Truck	Suspension Repair	John Doe	0.5	1124
+1623	46399	SUV	Battery Replacement	Jane Smith	0.5	1125
+1624	46400	Sedan	Wheel Alignment	Alex Brown	0.5	1127
+1625	46401	Sedan	Oil Change	John Doe	0.5	1128
+1626	46402	SUV	Brake Repair	Jane Smith	0.5	1130
+1627	46403	Sedan	Tire Replacement	John Doe	0.4	1131
+1628	46404	Truck	Engine Tune-up	Alex Brown	0.4	1133
+1629	46405	SUV	Oil Change	Jane Smith	0.4	1134
+1630	46406	Sedan	Transmission Service	Alex Brown	0.4	1136
+1631	46407	Truck	Brake Repair	John Doe	0.4	1137
+1632	46408	SUV	Tire Rotation	Jane Smith	0.3	1139
+1633	46409	Sedan	Air Conditioning Repair	Alex Brown	0.3	1140
+1634	46410	Truck	Oil Change	John Doe	0.3	1142
+1635	46411	SUV	Engine Diagnostic	Jane Smith	0.3	1144
+1636	46412	Sedan	Brake Fluid Replacement	Alex Brown	0.3	1145
+1637	46413	Truck	Suspension Repair	John Doe	0.3	1147
+1638	46414	SUV	Battery Replacement	Jane Smith	0.2	1148
+1639	46415	Sedan	Wheel Alignment	Alex Brown	0.2	1150
+1640	46416	Sedan	Oil Change	John Doe	0.2	1151
+1641	46417	SUV	Brake Repair	Jane Smith	0.2	1153
+1642	46418	Sedan	Tire Replacement	John Doe	0.2	1154
+1643	46419	Truck	Engine Tune-up	Alex Brown	1.0	1156
+1644	46420	SUV	Oil Change	Jane Smith	2.5	1157
+1645	46421	Sedan	Transmission Service	Alex Brown	1.5	1159
+1646	46422	Truck	Brake Repair	John Doe	3.0	1160
+1647	46423	SUV	Tire Rotation	Jane Smith	1.0	1162
+1648	46424	Sedan	Air Conditioning Repair	Alex Brown	4.0	1164
+1649	46425	Truck	Oil Change	John Doe	3.0	1165
+1650	46426	SUV	Engine Diagnostic	Jane Smith	0.5	1167
+1651	46427	Sedan	Brake Fluid Replacement	Alex Brown	2.0	1168
+1652	46428	Truck	Suspension Repair	John Doe	1.5	1170
+1653	46429	SUV	Battery Replacement	Jane Smith	1.0	1171
+1654	46430	Sedan	Wheel Alignment	Alex Brown	1.0	1173
+1655	46431	Sedan	Oil Change	John Doe	5.0	1174
+1656	46432	SUV	Brake Repair	Jane Smith	0.5	1176
+1657	46433	Sedan	Tire Replacement	John Doe	1.5	1177
+1658	46434	Truck	Engine Tune-up	Alex Brown	1.8	1179
+1659	46435	Sedan	Oil Change	John Doe	1.8	1180
+1660	46436	SUV	Brake Repair	Jane Smith	1.8	1182
+1661	46437	Sedan	Tire Replacement	John Doe	1.7	1183
+1662	46438	Truck	Engine Tune-up	Alex Brown	1.7	1185
+1663	46439	SUV	Oil Change	Jane Smith	1.7	1187
+1664	46440	Sedan	Transmission Service	Alex Brown	1.7	1188
+1665	46441	Truck	Brake Repair	John Doe	1.7	1190
+1666	46442	SUV	Tire Rotation	Jane Smith	1.6	1191
+1667	46443	Sedan	Air Conditioning Repair	Alex Brown	1.6	1193
+1668	46444	Truck	Oil Change	John Doe	1.6	1194
+1669	46445	SUV	Engine Diagnostic	Jane Smith	1.6	1196
+1670	46446	Sedan	Brake Fluid Replacement	Alex Brown	1.6	1197
+1671	46447	Truck	Suspension Repair	John Doe	1.6	1199
+1672	46448	SUV	Battery Replacement	Jane Smith	1.5	1200
+1673	46449	Sedan	Wheel Alignment	Alex Brown	1.5	1202
+1674	46450	Sedan	Oil Change	John Doe	1.5	1203
+1675	46451	SUV	Brake Repair	Jane Smith	1.5	1205
+1676	46452	Sedan	Tire Replacement	John Doe	1.5	1207
+1677	46453	Truck	Engine Tune-up	Alex Brown	1.5	1208
+1678	46454	SUV	Oil Change	Jane Smith	1.4	1210
+1679	46455	Sedan	Transmission Service	Alex Brown	1.4	1211
+1680	46456	Truck	Brake Repair	John Doe	1.4	1213
+1681	46457	SUV	Tire Rotation	Jane Smith	1.4	1214
+1682	46458	Sedan	Air Conditioning Repair	Alex Brown	1.4	1216
+1683	46459	Truck	Oil Change	John Doe	1.3	1217
+1684	46460	SUV	Engine Diagnostic	Jane Smith	1.3	1219
+1685	46461	Sedan	Brake Fluid Replacement	Alex Brown	1.3	1220
+1686	46462	Truck	Suspension Repair	John Doe	1.3	1222
+1687	46463	SUV	Battery Replacement	Jane Smith	1.3	1223
